@@ -1,0 +1,134 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_variants",
+  "info": {
+    "singularName": "product-variant",
+    "pluralName": "product-variants",
+    "displayName": "Product Variant",
+    "description": "Product Variant schema"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sku": {
+      "type": "string",
+      "required": true
+    },
+    "parent_product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::parent-product.parent-product",
+      "inversedBy": "variants"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "short_description": {
+      "type": "text"
+    },
+    "meta_name": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "text"
+    },
+    "meta_keywords": {
+      "type": "text"
+    },
+    "primary_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false
+    },
+    "gallery_images": {
+      "type": "media",
+      "multiple": true,
+      "required": false
+    },
+    "information_files": {
+      "type": "media",
+      "multiple": true,
+      "required": false
+    },
+    "is_active": {
+      "type": "boolean"
+    },
+    "color": {
+      "type": "string"
+    },
+    "size": {
+      "type": "string"
+    },
+    "sizes": {
+      "type": "json"
+    },
+    "supplier_search_color": {
+      "type": "string"
+    },
+    "supplier_color_code": {
+      "type": "string"
+    },
+    "hex_color": {
+      "type": "string"
+    },
+    "supplier_main_category": {
+      "type": "string"
+    },
+    "material": {
+      "type": "string"
+    },
+    "country_of_origin": {
+      "type": "string"
+    },
+    "production_time": {
+      "type": "string"
+    },
+    "imprint_required": {
+      "type": "boolean"
+    },
+    "tron_logo_enabled": {
+      "type": "boolean"
+    },
+    "tron_logo_reference": {
+      "type": "string"
+    },
+    "weight": {
+      "type": "decimal"
+    },
+    "dimensions_length": {
+      "type": "decimal"
+    },
+    "dimensions_height": {
+      "type": "decimal"
+    },
+    "dimensions_diameter": {
+      "type": "decimal"
+    },
+    "dimensions_width": {
+      "type": "decimal"
+    },
+    "dimensions_depth": {
+      "type": "decimal"
+    },
+    "fragile": {
+      "type": "boolean"
+    },
+    "usb_item": {
+      "type": "boolean"
+    },
+    "embroidery_sizes": {
+      "type": "json"
+    },
+    "is_service_base": {
+      "type": "boolean"
+    },
+    "is_primary_for_color": {
+      "type": "boolean"
+    }
+  }
+}

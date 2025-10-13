@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sync_configurations",
+  "info": {
+    "singularName": "sync-configuration",
+    "pluralName": "sync-configurations",
+    "displayName": "Sync Configuration",
+    "description": "Configuration for Promidata synchronization"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "supplier": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "sync_config"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_sync": {
+      "type": "datetime"
+    },
+    "last_hash": {
+      "type": "text"
+    },
+    "sync_status": {
+      "type": "enumeration",
+      "enum": ["idle", "running", "completed", "failed"],
+      "default": "idle"
+    },
+    "sync_log": {
+      "type": "text"
+    },
+    "products_processed": {
+      "type": "integer",
+      "default": 0
+    },
+    "products_created": {
+      "type": "integer",
+      "default": 0
+    },
+    "products_updated": {
+      "type": "integer",
+      "default": 0
+    },
+    "sync_error": {
+      "type": "text"
+    }
+  }
+}

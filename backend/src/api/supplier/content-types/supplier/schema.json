@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "suppliers",
+  "info": {
+    "singularName": "supplier",
+    "pluralName": "suppliers",
+    "displayName": "Supplier",
+    "description": "Product suppliers from Promidata"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "code": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "minLength": 1,
+      "maxLength": 10
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "auto_import": {
+      "type": "boolean",
+      "default": false
+    },
+    "last_sync_date": {
+      "type": "datetime"
+    },
+    "last_sync_status": {
+      "type": "enumeration",
+      "enum": ["never", "running", "completed", "failed"],
+      "default": "never"
+    },
+    "last_sync_message": {
+      "type": "text"
+    },
+    "products_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "last_hash": {
+      "type": "string"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product",
+      "mappedBy": "supplier"
+    },
+    "sync_config": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::sync-configuration.sync-configuration",
+      "mappedBy": "supplier"
+    }
+  }
+}

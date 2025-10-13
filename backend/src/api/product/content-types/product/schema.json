@@ -1,0 +1,185 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Product",
+    "description": "Products from Promidata suppliers"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sku": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "model": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "article_number": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "sku_supplier": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "ean": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "name": {
+      "type": "json",
+      "required": true
+    },
+    "description": {
+      "type": "json"
+    },
+    "color_name": {
+      "type": "json"
+    },
+    "color_code": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "model_name": {
+      "type": "json"
+    },
+    "search_color": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "size": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "dimension": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "meta_keyword": {
+      "type": "text"
+    },
+    "weight": {
+      "type": "decimal",
+      "precision": 10,
+      "scale": 3
+    },
+    "supplier": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::supplier.supplier",
+      "inversedBy": "products"
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category",
+      "inversedBy": "products"
+    },
+    "dimensions": {
+      "type": "component",
+      "component": "product.dimensions"
+    },
+    "price_tiers": {
+      "type": "component",
+      "repeatable": true,
+      "component": "product.price-tier"
+    },
+    "main_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "gallery_images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "model_image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "customization": {
+      "type": "json"
+    },
+    "refining": {
+      "type": "json"
+    },
+    "refining_dimensions": {
+      "type": "json"
+    },
+    "refining_location": {
+      "type": "json"
+    },
+    "maxcolors": {
+      "type": "integer"
+    },
+    "print_option_group": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "must_have_imprint": {
+      "type": "boolean",
+      "default": false
+    },
+    "brand": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "material": {
+      "type": "json"
+    },
+    "country_of_origin": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "delivery_time": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "customs_tariff_number": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "tax": {
+      "type": "enumeration",
+      "enum": ["H", "L"],
+      "default": "H"
+    },
+    "filter_codes": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "main_category": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "additional_categories": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "promidata_hash": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "last_synced": {
+      "type": "datetime"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

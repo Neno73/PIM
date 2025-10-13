@@ -1,0 +1,41 @@
+{
+  "kind": "singleType",
+  "collectionName": "promidata_syncs",
+  "info": {
+    "singularName": "promidata-sync",
+    "pluralName": "promidata-syncs",
+    "displayName": "Promidata Sync",
+    "description": "Promidata synchronization management"
+  },
+  "options": {
+    "draftAndPublish": false,
+    "comment": ""
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "last_global_sync": {
+      "type": "datetime",
+      "required": false
+    },
+    "sync_in_progress": {
+      "type": "boolean",
+      "default": false
+    },
+    "total_suppliers": {
+      "type": "integer",
+      "default": 0
+    },
+    "total_products": {
+      "type": "integer",
+      "default": 0
+    },
+    "total_categories": {
+      "type": "integer",
+      "default": 0
+    },
+    "sync_settings": {
+      "type": "json",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "parent_products",
+  "info": {
+    "singularName": "parent-product",
+    "pluralName": "parent-products",
+    "displayName": "Parent Product",
+    "description": "Parent Product schema"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "sku": {
+      "type": "string",
+      "required": true
+    },
+    "a_number": {
+      "type": "string",
+      "required": true
+    },
+    "supplier_sku": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "brand": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "default_products": {
+      "type": "string"
+    },
+    "total_variants_count": {
+      "type": "integer"
+    },
+    "promidata_hash": {
+      "type": "string"
+    },
+    "battery_information": {
+      "type": "string"
+    },
+    "required_certificates": {
+      "type": "string"
+    },
+    "variants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-variant.product-variant",
+      "mappedBy": "parent_product"
+    }
+  }
+}

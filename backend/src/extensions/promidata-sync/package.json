@@ -1,0 +1,25 @@
+{
+  "name": "promidata-sync",
+  "version": "1.0.0",
+  "description": "Promidata synchronization management for Strapi admin",
+  "strapi": {
+    "name": "promidata-sync",
+    "description": "Manage Promidata product synchronization",
+    "kind": "plugin",
+    "displayName": "Promidata Sync"
+  },
+  "dependencies": {},
+  "author": {
+    "name": "PromoAtlas Team"
+  },
+  "maintainers": [
+    {
+      "name": "PromoAtlas Team"
+    }
+  ],
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT"
+}

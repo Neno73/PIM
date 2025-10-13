@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_product_price_tiers",
+  "info": {
+    "displayName": "Price Tier",
+    "description": "Quantity-based pricing tiers"
+  },
+  "options": {},
+  "attributes": {
+    "quantity": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "buying_price": {
+      "type": "decimal",
+      "min": 0
+    },
+    "currency": {
+      "type": "string",
+      "default": "EUR",
+      "maxLength": 3
+    }
+  }
+}
