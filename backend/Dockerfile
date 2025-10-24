@@ -51,10 +51,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
-
-# Copy compiled configuration files
-COPY --from=builder /app/dist/config ./config
 COPY --from=builder /app/database ./database
+COPY --from=builder /app/favicon.png ./favicon.png
 
 # Create necessary directories and admin symlink for Strapi 5
 RUN mkdir -p /app/.tmp && \
