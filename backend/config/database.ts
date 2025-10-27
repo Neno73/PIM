@@ -36,7 +36,7 @@ export default ({ env }) => {
       },
       // Disable pooling for Neon by setting max 1
       pool: { min: 0, max: 1 },
-      autoMigration: true,
+      debug: false,
     },
     sqlite: {
       connection: {

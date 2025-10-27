@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Strapi Backend - Production
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: promovere-pim
+    restart: unless-stopped
+    ports:
+      - "7337:7337"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_CLIENT=${DATABASE_CLIENT}
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_SSL=${DATABASE_SSL}
+      - DATABASE_SCHEMA=${DATABASE_SCHEMA}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
+      - R2_BUCKET_NAME=${R2_BUCKET_NAME}
+      - R2_PUBLIC_URL=${R2_PUBLIC_URL}
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - APP_KEYS=${APP_KEYS}
+      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
+      - API_TOKEN_SALT=${API_TOKEN_SALT}
+      - JWT_SECRET=${JWT_SECRET}
+      - TRANSFER_TOKEN_SALT=${TRANSFER_TOKEN_SALT}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - PROMIDATA_BASE_URL=${PROMIDATA_BASE_URL}
+      - STRAPI_TELEMETRY_DISABLED=true
+      - HOST=0.0.0.0
+      - PORT=7337
+    networks:
+      - promoatlas-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7337/_health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: promoatlas-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-backend-proxy.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - promoatlas-network
+    depends_on:
+      - backend
+
+networks:
+  promoatlas-network:
+    driver: bridge

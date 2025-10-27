@@ -49,8 +49,10 @@ COPY --from=deps /app/node_modules ./node_modules
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src ./src
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist/config ./config
 COPY --from=builder /app/database ./database
 COPY --from=builder /app/favicon.png ./favicon.png
 
@@ -58,17 +60,17 @@ COPY --from=builder /app/favicon.png ./favicon.png
 RUN mkdir -p /app/.tmp && \
     mkdir -p /app/node_modules/@strapi/admin/dist/server/server && \
     ln -sf /app/dist/build /app/node_modules/@strapi/admin/dist/server/server/build && \
-    chown -R strapi:strapi /app/.tmp /app/dist /app/public /app/config /app/database /app/package*.json
+    chown -R strapi:strapi /app/.tmp /app/dist /app/src /app/public /app/config /app/database /app/package*.json
 
 # Run as root for now to avoid permission issues
 # USER strapi
 
-EXPOSE 1337
+EXPOSE 7337
 ENV NODE_ENV=production
 ENV STRAPI_TELEMETRY_DISABLED=true
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:1337/_health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:7337/_health || exit 1
 
 CMD ["npm", "start"]
