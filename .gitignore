@@ -1,0 +1,41 @@
+# Environment files with secrets
+.env
+.env.local
+.env.production
+.env.development
+frontend/.env
+backend/.env
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production builds
+build/
+dist/
+.next/
+out/
+
+# Misc
+.DS_Store
+*.log
+*.log.*
+
+# Cache
+.cache/
+.tmp/
+.temp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
