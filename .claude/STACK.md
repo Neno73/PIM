@@ -1,6 +1,6 @@
 # Tech Stack
 
-*Last updated: 2025-10-28 09:30*
+*Last updated: 2025-10-28 14:45*
 
 ## Backend Framework
 
@@ -39,6 +39,41 @@
 ```json
 "better-sqlite3": "11.3.0"  // .tmp/data.db for local dev
 ```
+
+## Caching
+
+### Redis (ioredis)
+**Why:** Response caching to reduce database load and improve API performance
+
+**Client:**
+```json
+"ioredis": "5.8.2"
+```
+
+**Features:**
+- Middleware-based caching for GET requests
+- Configurable TTL (default: 300 seconds / 5 minutes)
+- Cache key generation from path + query params
+- Pattern-based cache invalidation
+- Automatic cache miss/hit headers (`X-Cache: HIT|MISS`)
+
+**Implementation:**
+- Middleware: `backend/src/middlewares/cache.ts`
+- Service: `backend/src/services/redis.service.ts`
+- Integrated in: `backend/config/middlewares.ts`
+
+**Configuration:**
+```bash
+REDIS_HOST=localhost      # Default: localhost
+REDIS_PORT=6379           # Default: 6379
+REDIS_PASSWORD=           # Optional
+REDIS_DB=0                # Database index
+```
+
+**Excluded Routes:**
+- `/api/promidata-sync/*` - Sync operations not cached
+- `/admin/*` - Admin routes not cached
+- `/auth/*` - Authentication not cached
 
 ## Storage
 
@@ -80,19 +115,44 @@
 
 ## Frontend
 
-### Vite + React (Static Build)
-**Why:** Fast build tool, optimized for modern browsers
+### Next.js 14.0.0 + React
+**Why:** Modern React framework with App Router, optimized for production
 
-**Current State:**
-- Pre-built static files in `frontend/dist/`
-- Source code available in `n8n_workflow` branch
-- Points to: `https://atlas-strapi.solsdev.com/api`
+**Key Packages:**
+```json
+"next": "14.0.0",
+"react": "^18",
+"react-dom": "^18"
+```
 
-**Stack (from n8n_workflow branch):**
-- React 18
-- React Router DOM 6
-- TypeScript
-- Vite bundler
+**UI Libraries:**
+```json
+"@radix-ui/react-checkbox": "^1.3.3",
+"@radix-ui/react-label": "^2.1.7",
+"@radix-ui/react-select": "^2.2.6",
+"@radix-ui/react-slider": "^1.3.6",
+"@radix-ui/react-slot": "^1.2.3",
+"framer-motion": "^12.23.22",
+"lucide-react": "^0.292.0"
+```
+
+**Styling:**
+```json
+"tailwindcss": "^3.3.0",
+"tailwindcss-animate": "^1.0.7",
+"tailwind-merge": "^3.3.1",
+"class-variance-authority": "^0.7.1",
+"clsx": "^2.1.1"
+```
+
+**Features:**
+- App Router (Next.js 14)
+- Server Components
+- Client Components with state management
+- shadcn/ui component library
+- Tailwind CSS for styling
+- Product catalog with pagination
+- Language selector (multilingual support)
 
 ## Runtime & Languages
 
@@ -178,12 +238,17 @@ TRANSFER_TOKEN_SALT, JWT_SECRET, ENCRYPTION_KEY
 
 # Promidata
 PROMIDATA_BASE_URL
+
+# Redis (Cache)
+REDIS_HOST=localhost      # Default: localhost
+REDIS_PORT=6379           # Default: 6379
+REDIS_PASSWORD=           # Optional
+REDIS_DB=0                # Optional, default: 0
 ```
 
 ## Notable Exclusions
 
 **Not Using:**
-- Redis (no caching layer currently)
 - Elasticsearch (no full-text search engine)
 - GraphQL (REST only)
 - MongoDB (PostgreSQL for relational data)

@@ -1,6 +1,6 @@
 # Known Issues & Gotchas
 
-*Last updated: 2025-10-28 09:30*
+*Last updated: 2025-10-28 14:45*
 
 ## Database (Neon PostgreSQL)
 
@@ -488,18 +488,50 @@ Break into modules:
 
 ---
 
-### No Caching Layer
+### Redis Caching (IMPLEMENTED - 2025-10-28)
 
-**Issue:** Every API call hits database
+**Status:** ✅ Redis caching now active
 
-**Impact:**
-- Slower responses under load
-- More database queries
+**New Issues to Watch:**
 
-**Future Improvement:**
-- Add Redis for caching
-- Cache product lists with TTL
-- Cache supplier data
+1. **Redis Connection Required**
+   - Backend won't start if Redis is unavailable (default: localhost:6379)
+   - Middleware skips caching silently if Redis disconnects
+   - Check logs for: `Redis connected successfully` or `Redis connection failed`
+
+2. **Pagination Cache Key Serialization**
+   - **FIXED (2025-10-28):** Object parameters were converting to `[object Object]`
+   - Now properly serialized with `JSON.stringify()`
+   - Cache keys include full pagination: `api:/api/parent-products?pagination={"page":2,"pageSize":20}`
+
+3. **Cache Invalidation Required**
+   - Product updates don't auto-invalidate cache
+   - Must manually invalidate: `invalidateEntityCache('parent-products')`
+   - Or wait for TTL expiration (default: 5 minutes)
+
+4. **X-Cache Headers in Responses**
+   - All GET responses include: `X-Cache: HIT` or `X-Cache: MISS`
+   - Also includes: `X-Cache-Key` showing the cache key used
+   - Useful for debugging caching behavior
+
+**Configuration:**
+```bash
+# backend/config/middlewares.ts
+{
+  ttl: 300,              # 5 minutes
+  prefix: 'api',
+  exclude: [
+    '/api/promidata-sync/*',
+    '/admin/*',
+    '/auth/*'
+  ]
+}
+```
+
+**Workarounds:**
+- If cache seems stale, restart Redis or flush with `redis-cli FLUSHDB`
+- Check middleware order in `config/middlewares.ts` - cache should be early
+- Verify Redis connection: `redis-cli ping` should return `PONG`
 
 ---
 

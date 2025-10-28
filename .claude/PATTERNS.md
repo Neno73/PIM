@@ -1,6 +1,6 @@
 # Code Patterns & Conventions
 
-*Last updated: 2025-10-28 09:30*
+*Last updated: 2025-10-28 14:45*
 
 ## Strapi Service Pattern
 
@@ -568,6 +568,210 @@ async function shouldUpdateProduct(sku: string, newHash: string): Promise<boolea
 
   return existing.promidata_hash !== newHash; // Changed
 }
+```
+
+## Redis Caching Pattern
+
+### Middleware-Based Caching
+
+**Location:** `backend/src/middlewares/cache.ts`
+
+**Pattern:** Koa middleware that intercepts GET requests, checks Redis, and caches responses
+
+```typescript
+// Create cache middleware factory
+export function createCacheMiddleware(options: CacheOptions = {}) {
+  const {
+    ttl = 300,           // Default 5 minutes
+    prefix = 'api',
+    exclude = [],
+  } = options;
+
+  return async (ctx, next) => {
+    // Only cache GET requests
+    if (ctx.method !== 'GET') {
+      return await next();
+    }
+
+    // Skip if Redis not connected
+    if (!redisService.isReady()) {
+      return await next();
+    }
+
+    // Check excluded routes
+    if (isExcluded(ctx.path, exclude)) {
+      return await next();
+    }
+
+    // Generate cache key
+    const cacheKey = generateCacheKey(ctx.path, ctx.query, prefix);
+
+    // Try cached response
+    const cached = await redisService.get(cacheKey);
+    if (cached) {
+      ctx.set('X-Cache', 'HIT');
+      ctx.set('X-Cache-Key', cacheKey);
+      ctx.body = cached;
+      return;
+    }
+
+    // Execute route handler
+    await next();
+
+    // Cache successful responses
+    if (ctx.status >= 200 && ctx.status < 300 && ctx.body) {
+      await redisService.set(cacheKey, ctx.body, ttl);
+      ctx.set('X-Cache', 'MISS');
+      ctx.set('X-Cache-Key', cacheKey);
+    }
+  };
+}
+```
+
+**Usage in `backend/config/middlewares.ts`:**
+```typescript
+export default [
+  'strapi::logger',
+  'strapi::errors',
+  'strapi::security',
+  'strapi::cors',
+  {
+    name: 'global::cache',
+    config: {
+      ttl: 300,              // 5 minutes
+      prefix: 'api',
+      exclude: [
+        '/api/promidata-sync/*',
+        '/admin/*',
+        '/auth/*'
+      ]
+    }
+  },
+  'strapi::poweredBy',
+  'strapi::query',
+  'strapi::body',
+  'strapi::session',
+  'strapi::favicon',
+  'strapi::public',
+];
+```
+
+### Cache Key Generation
+
+**Critical:** Properly serialize object parameters to avoid cache key collisions
+
+```typescript
+function generateCacheKey(path: string, query: any, prefix: string): string {
+  const sortedQuery = Object.keys(query || {})
+    .sort()
+    .map(key => {
+      const value = query[key];
+      // IMPORTANT: Serialize objects properly
+      if (typeof value === 'object' && value !== null) {
+        return `${key}=${JSON.stringify(value)}`;
+      }
+      return `${key}=${value}`;
+    })
+    .join('&');
+
+  const queryString = sortedQuery ? `?${sortedQuery}` : '';
+  return `${prefix}:${path}${queryString}`;
+}
+```
+
+**Result:**
+```
+api:/api/parent-products?pagination={"page":2,"pageSize":20}
+```
+
+### Cache Invalidation
+
+```typescript
+// Invalidate by pattern
+export async function invalidateCache(pattern: string): Promise<number> {
+  if (!redisService.isReady()) return 0;
+
+  const count = await redisService.delPattern(pattern);
+  console.log(`Invalidated ${count} keys matching "${pattern}"`);
+  return count;
+}
+
+// Invalidate specific entity
+export async function invalidateEntityCache(entityType: string): Promise<number> {
+  const pattern = `api:/api/${entityType}*`;
+  return await invalidateCache(pattern);
+}
+```
+
+**Usage after entity updates:**
+```typescript
+// After updating products
+await invalidateEntityCache('parent-products');
+await invalidateEntityCache('products');
+```
+
+### Redis Service Pattern
+
+**Location:** `backend/src/services/redis.service.ts`
+
+```typescript
+import Redis from 'ioredis';
+
+class RedisService {
+  private client: Redis | null = null;
+  private ready: boolean = false;
+
+  async connect() {
+    this.client = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD,
+      db: parseInt(process.env.REDIS_DB || '0'),
+      retryStrategy: (times) => {
+        return Math.min(times * 50, 2000);
+      }
+    });
+
+    this.client.on('connect', () => {
+      this.ready = true;
+      console.log('✅ Redis connected');
+    });
+
+    this.client.on('error', (err) => {
+      this.ready = false;
+      console.error('❌ Redis error:', err);
+    });
+  }
+
+  isReady(): boolean {
+    return this.ready && this.client !== null;
+  }
+
+  async get(key: string): Promise<any> {
+    if (!this.isReady()) return null;
+    const value = await this.client!.get(key);
+    return value ? JSON.parse(value) : null;
+  }
+
+  async set(key: string, value: any, ttl?: number): Promise<void> {
+    if (!this.isReady()) return;
+    const serialized = JSON.stringify(value);
+    if (ttl) {
+      await this.client!.setex(key, ttl, serialized);
+    } else {
+      await this.client!.set(key, serialized);
+    }
+  }
+
+  async delPattern(pattern: string): Promise<number> {
+    if (!this.isReady()) return 0;
+    const keys = await this.client!.keys(pattern);
+    if (keys.length === 0) return 0;
+    return await this.client!.del(...keys);
+  }
+}
+
+export default new RedisService();
 ```
 
 ## File & Directory Naming

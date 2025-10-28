@@ -1,6 +1,6 @@
 # Architectural Decisions
 
-*Last updated: 2025-10-28 09:30*
+*Last updated: 2025-10-28 14:45*
 
 This log tracks significant architectural decisions made during development.
 
@@ -245,15 +245,143 @@ When adding a decision, include:
 
 ---
 
+## [2025-10-28] Implement Redis Caching
+
+**Status:** Accepted
+
+**Context:** API responses were hitting the database for every request, causing slower response times under load. Neon PostgreSQL connection pool limited to 1 connection made this especially problematic.
+
+**Decision:** Implement Redis-based response caching using ioredis client with custom Koa middleware.
+
+**Consequences:**
++ Significantly reduced database queries for repeated requests
++ Improved API response times (cache hits return immediately)
++ Added `X-Cache` headers for debugging (HIT/MISS)
++ Configurable TTL (default: 5 minutes) and route exclusions
+- Requires Redis running (adds infrastructure dependency)
+- Cache invalidation needed after content updates
+- Stale data possible if TTL too long
+
+**Implementation:**
+- Middleware: `backend/src/middlewares/cache.ts`
+- Service: `backend/src/services/redis.service.ts`
+- Configuration: `backend/config/middlewares.ts`
+
+**Alternatives Considered:**
+- No caching (rejected - too slow under load)
+- Application-level caching (rejected - doesn't reduce DB queries)
+- CDN caching only (rejected - not sufficient for dynamic data)
+
+**Rationale:** Middleware-based Redis caching provides optimal balance of performance, simplicity, and flexibility.
+
+---
+
+## [2025-10-28] Fix Pagination with Button Elements
+
+**Status:** Accepted
+
+**Context:** Product pagination controls were visible but clicking them didn't load new pages. Investigation revealed two issues:
+1. shadcn/ui `PaginationLink` used `<a>` tags instead of `<button>`
+2. Redis cache keys included `[object Object]` instead of serialized pagination params
+
+**Decision:**
+1. Change `PaginationLink` to render `<button>` elements instead of anchors
+2. Update cache key generation to properly serialize object parameters with `JSON.stringify()`
+
+**Consequences:**
++ Pagination now fully functional
++ Each page has unique cache key
++ Semantic HTML (buttons for actions, not links)
+- Required modifying shadcn/ui component (divergence from upstream)
+- Cache keys now longer (include full JSON)
+
+**Files Modified:**
+- `frontend/src/components/ui/pagination.tsx:37-59`
+- `backend/src/middlewares/cache.ts:86-102`
+
+**Root Cause:** Anchor tags without `href` don't properly handle `onClick` events, and JavaScript's default object toString() converts to "[object Object]".
+
+**Rationale:** Button elements are semantically correct for pagination actions, and proper serialization prevents cache key collisions.
+
+---
+
+## [2025-10-28] Remove Chat Interface from Main Branch
+
+**Status:** Accepted
+
+**Context:** Frontend was copied from `n8n_workflow` branch which included full AI chat interface with semantic search, but the main branch (`test_atlas`) focuses solely on product catalog without AI features.
+
+**Decision:** Remove all chat-related components, API routes, and dependencies to keep this branch focused on product management only.
+
+**Consequences:**
++ Cleaner, more focused codebase
++ Reduced package count (from ~400 to 196 dependencies)
++ Removed ~3,989 accidentally committed node_modules files
++ Smaller bundle size
+- AI features not available on this branch (intentional)
+- Must switch to `n8n_workflow` branch for chat functionality
+
+**Removed:**
+- Components: `ChatInterface`, `AtlasChatInterface`, `ModernChatInterface`, `StreamingChatInterface`, `SemanticSearchInterface`
+- API Routes: `/api/chat`, `/api/chat-stream`, `/api/semantic-search`, `/api/cleanup`
+- Dependencies: `@ai-sdk/react`, `ai`, `react-markdown`, `pg`, `@types/pg`
+
+**Alternatives Considered:**
+- Keep chat interface dormant (rejected - unnecessary code bloat)
+- Extract to separate npm package (rejected - overkill for branch separation)
+
+**Rationale:** Branch separation keeps concerns isolated - main branch for product catalog, n8n_workflow for AI features.
+
+---
+
+## [2025-10-28] Security: Remove .env Files from Git
+
+**Status:** Accepted
+
+**Context:** Environment files containing production secrets (database credentials, R2 access keys, Strapi JWT secrets) were tracked in git and exposed in GitHub repository.
+
+**Decision:**
+1. Immediately remove `.env` files from git tracking with `git rm --cached`
+2. Create `.gitignore` to prevent future tracking
+3. Commit removal with security warning
+4. Document need for secret rotation in commit message
+
+**Consequences:**
++ Secrets no longer exposed in latest commit
++ Future .env files automatically ignored
+- Secrets still in git history (requires rotation)
+- Anyone who cloned repo before this commit has access to secrets
+
+**Security Impact:**
+- **CRITICAL:** Exposed credentials include:
+  - Database password: `npg_SKraxqA13stc`
+  - R2 Access Keys
+  - Strapi JWT secrets and encryption keys
+
+**Next Steps (Recommended):**
+1. Rotate all exposed secrets immediately
+2. Use BFG Repo-Cleaner to remove from git history
+3. Audit access logs for unauthorized usage
+
+**Alternatives Considered:**
+- Leave in git with warning comment (rejected - unacceptable security risk)
+- Delete entire repository (rejected - too disruptive)
+
+**Rationale:** Immediate removal from tracking prevents further exposure, though secret rotation still required.
+
+---
+
 ## Future Decisions to Make
 
 ### 1. Caching Layer
-**Question:** Should we add Redis for caching?
-**Considerations:**
-- Reduce database load
-- Faster API responses
-- Additional infrastructure cost
-- Cache invalidation complexity
+**Status:** ~~Future~~ → **IMPLEMENTED (2025-10-28)**
+
+See decision: [2025-10-28] Implement Redis Caching above.
+
+Original question: Should we add Redis for caching?
+**Answer:** Yes - Now implemented with middleware-based caching.
+
+---
 
 ### 2. Testing Strategy
 **Question:** What testing framework and coverage?

@@ -1,12 +1,12 @@
 # System Architecture
 
-*Last updated: 2025-10-28 09:30*
+*Last updated: 2025-10-28 14:45*
 
 ## High-Level Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (Vite/React)                    │
+│                   Frontend (Next.js 14)                     │
 │                   http://localhost:3000                     │
 └────────────────────────┬────────────────────────────────────┘
                          │ REST API calls
@@ -15,17 +15,20 @@
 │                   Strapi CMS Backend                        │
 │                  http://0.0.0.0:7337                        │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │  Controllers ─→ Services ─→ EntityService/DB        │   │
-│  │  (Routing)      (Logic)     (Data Access)           │   │
+│  │  Middleware (Cache) ─→ Controllers ─→ Services      │   │
+│  │  (HTTP Layer)          (Routing)      (Logic)       │   │
+│  │                                ↓                     │   │
+│  │                        EntityService/DB              │   │
+│  │                        (Data Access)                 │   │
 │  └─────────────────────────────────────────────────────┘   │
-└────┬───────────────────────┬─────────────────────┬─────────┘
-     │                       │                     │
-     ▼                       ▼                     ▼
-┌──────────┐        ┌───────────────┐    ┌────────────────┐
-│   Neon   │        │  Promidata    │    │  Cloudflare R2 │
-│PostgreSQL│        │   Supplier    │    │  Image Storage │
-│ Database │        │      API      │    │                │
-└──────────┘        └───────────────┘    └────────────────┘
+└────┬──────────┬────────────────┬─────────────────────┬─────┘
+     │          │                │                     │
+     ▼          ▼                ▼                     ▼
+┌─────────┐ ┌──────────┐  ┌───────────────┐  ┌────────────────┐
+│  Redis  │ │   Neon   │  │  Promidata    │  │  Cloudflare R2 │
+│ (Cache) │ │PostgreSQL│  │   Supplier    │  │  Image Storage │
+│         │ │ Database │  │      API      │  │                │
+└─────────┘ └──────────┘  └───────────────┘  └────────────────┘
 ```
 
 ## Directory Structure
@@ -64,6 +67,12 @@ backend/
 │   ├── extensions/
 │   │   └── promidata-sync/      # Custom admin plugin
 │   │       └── strapi-admin.js  # Adds UI to admin panel
+│   │
+│   ├── middlewares/             # Custom HTTP middlewares
+│   │   └── cache.ts             # Redis caching middleware (144 lines)
+│   │
+│   ├── services/                # Shared services
+│   │   └── redis.service.ts     # Redis connection & operations
 │   │
 │   └── components/              # Reusable schema components
 │
