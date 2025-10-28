@@ -33,17 +33,40 @@ services:
       - TRANSFER_TOKEN_SALT=${TRANSFER_TOKEN_SALT}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - PROMIDATA_BASE_URL=${PROMIDATA_BASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - STRAPI_TELEMETRY_DISABLED=true
       - HOST=0.0.0.0
       - PORT=7337
     networks:
       - promoatlas-network
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7337/_health", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: promoatlas-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - promoatlas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   # Nginx Reverse Proxy (optional)
   nginx:
@@ -63,3 +86,7 @@ services:
 networks:
   promoatlas-network:
     driver: bridge
+
+volumes:
+  redis-data:
+    driver: local

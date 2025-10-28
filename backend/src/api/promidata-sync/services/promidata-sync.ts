@@ -343,7 +343,7 @@ export default factories.createCoreService(
     },
 
     /**
-     * Fetch real supplier name from Promidata API with static fallback
+     * Fetch real supplier name from Promidata API with database fallback
      */
     async fetchSupplierRealName(supplierCode: string): Promise<string | null> {
       try {
@@ -366,20 +366,43 @@ export default factories.createCoreService(
           }
         }
 
-        // If no name from API, try static fallback
-        if (this.staticSupplierNames[supplierCode]) {
-          strapi.log.info(`Using static fallback name for ${supplierCode}: ${this.staticSupplierNames[supplierCode]}`);
-          return this.staticSupplierNames[supplierCode];
+        // If no name from API, try database lookup
+        const supplier = await strapi.db.query('api::supplier.supplier').findOne({
+          where: { code: supplierCode }
+        });
+
+        if (supplier?.display_name) {
+          strapi.log.info(`Using database supplier name for ${supplierCode}: ${supplier.display_name}`);
+          return supplier.display_name;
+        }
+
+        // Final fallback: use supplier name from database if display_name is not set
+        if (supplier?.name) {
+          strapi.log.info(`Using database supplier.name for ${supplierCode}: ${supplier.name}`);
+          return supplier.name;
         }
 
         return null;
       } catch (error) {
         strapi.log.error(`Failed to fetch real name for supplier ${supplierCode}:`, error);
 
-        // On error, still try static fallback
-        if (this.staticSupplierNames[supplierCode]) {
-          strapi.log.info(`Using static fallback name after error for ${supplierCode}: ${this.staticSupplierNames[supplierCode]}`);
-          return this.staticSupplierNames[supplierCode];
+        // On error, still try database lookup
+        try {
+          const supplier = await strapi.db.query('api::supplier.supplier').findOne({
+            where: { code: supplierCode }
+          });
+
+          if (supplier?.display_name) {
+            strapi.log.info(`Using database supplier name after error for ${supplierCode}: ${supplier.display_name}`);
+            return supplier.display_name;
+          }
+
+          if (supplier?.name) {
+            strapi.log.info(`Using database supplier.name after error for ${supplierCode}: ${supplier.name}`);
+            return supplier.name;
+          }
+        } catch (dbError) {
+          strapi.log.error(`Database lookup also failed for ${supplierCode}:`, dbError);
         }
 
         return null;
@@ -2382,5 +2405,77 @@ export default factories.createCoreService(
           timestamp: new Date().toISOString(),
         };
       }
-    },  })
+    },
+
+    /**
+     * Migrate hardcoded supplier mapping to database
+     * Populates supplier table with display_name and mapping_source fields
+     */
+    async migrateSupplierMappingToDatabase() {
+      strapi.log.info('Starting supplier mapping migration to database...');
+
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+      const errors = [];
+
+      // Iterate through all hardcoded supplier mappings
+      for (const [code, displayName] of Object.entries(this.staticSupplierNames)) {
+        try {
+          // Check if supplier already exists
+          const existingSupplier = await strapi.db.query('api::supplier.supplier').findOne({
+            where: { code }
+          });
+
+          if (existingSupplier) {
+            // Update existing supplier with display_name and mapping_source
+            await strapi.db.query('api::supplier.supplier').update({
+              where: { id: existingSupplier.id },
+              data: {
+                display_name: displayName,
+                mapping_source: 'promidata',
+                name: existingSupplier.name || displayName // Keep existing name or use display_name
+              }
+            });
+
+            strapi.log.info(`Updated supplier ${code}: ${displayName}`);
+            updated++;
+          } else {
+            // Create new supplier
+            await strapi.db.query('api::supplier.supplier').create({
+              data: {
+                code,
+                name: displayName,
+                display_name: displayName,
+                is_active: true,
+                mapping_source: 'promidata'
+              }
+            });
+
+            strapi.log.info(`Created supplier ${code}: ${displayName}`);
+            created++;
+          }
+        } catch (error) {
+          strapi.log.error(`Failed to process supplier ${code}:`, error.message);
+          errors.push({ code, error: error.message });
+          skipped++;
+        }
+      }
+
+      const result = {
+        created,
+        updated,
+        skipped,
+        total: Object.keys(this.staticSupplierNames).length,
+        errors: errors.length > 0 ? errors : undefined
+      };
+
+      strapi.log.info('Supplier mapping migration completed:', result);
+
+      return {
+        message: `Migration completed: ${created} created, ${updated} updated, ${skipped} skipped`,
+        ...result
+      };
+    },
+  })
 );

@@ -77,5 +77,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/promidata-sync/migrate-supplier-mapping',
+      handler: 'promidata-sync.migrateSupplierMapping',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

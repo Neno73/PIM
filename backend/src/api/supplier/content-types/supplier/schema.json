@@ -25,9 +25,18 @@
       "minLength": 1,
       "maxLength": 255
     },
+    "display_name": {
+      "type": "string",
+      "maxLength": 255
+    },
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "mapping_source": {
+      "type": "enumeration",
+      "enum": ["promidata", "manual"],
+      "default": "manual"
     },
     "auto_import": {
       "type": "boolean",

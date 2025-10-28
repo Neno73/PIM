@@ -715,6 +715,10 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    display_name: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 255;
+      }>;
     is_active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     last_hash: Schema.Attribute.String;
     last_sync_date: Schema.Attribute.DateTime;
@@ -729,6 +733,8 @@ export interface ApiSupplierSupplier extends Struct.CollectionTypeSchema {
       'api::supplier.supplier'
     > &
       Schema.Attribute.Private;
+    mapping_source: Schema.Attribute.Enumeration<['promidata', 'manual']> &
+      Schema.Attribute.DefaultTo<'manual'>;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{

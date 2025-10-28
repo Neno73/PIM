@@ -15,7 +15,17 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }) {
-    console.log('🚀 Bootstrapping application to set public permissions...');
+    console.log('🚀 Bootstrapping application...');
+
+    // Initialize Redis connection
+    try {
+      const redisService = require('./services/redis.service').default;
+      await redisService.connect();
+    } catch (error) {
+      console.error('⚠️ Failed to connect to Redis (continuing without cache):', error.message);
+    }
+
+    console.log('🚀 Setting public permissions...');
     try {
       const publicRole = await strapi.query('plugin::users-permissions.role').findOne({
         where: { type: 'public' },
@@ -31,6 +41,10 @@ export default {
       const permissionsToSet = [
         'api::product.product.find',
         'api::product.product.findOne',
+        'api::parent-product.parent-product.find',
+        'api::parent-product.parent-product.findOne',
+        'api::product-variant.product-variant.find',
+        'api::product-variant.product-variant.findOne',
         'api::category.category.find',
         'api::category.category.findOne',
         'api::supplier.supplier.find',
@@ -41,6 +55,7 @@ export default {
         'api::promidata-sync.promidata-sync.getSyncHistory',
         'api::promidata-sync.promidata-sync.importCategories',
         'api::promidata-sync.promidata-sync.importSuppliers',
+        'api::promidata-sync.promidata-sync.migrateSupplierMapping',
       ];
 
       for (const action of permissionsToSet) {

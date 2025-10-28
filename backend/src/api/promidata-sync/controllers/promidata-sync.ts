@@ -178,5 +178,26 @@ export default {
     } catch (error) {
       ctx.badRequest('Failed to check supplier names', { details: error.message });
     }
+  },
+
+  /**
+   * Migrate hardcoded supplier mapping to database
+   * Run once after adding display_name and mapping_source fields
+   */
+  async migrateSupplierMapping(ctx: Context) {
+    try {
+      const syncService = strapi.service('api::promidata-sync.promidata-sync');
+
+      // Call the migration method we'll add to the service
+      const result = await syncService.migrateSupplierMappingToDatabase();
+
+      ctx.body = {
+        success: true,
+        message: 'Supplier mapping migration completed',
+        data: result
+      };
+    } catch (error) {
+      ctx.badRequest('Migration failed', { details: error.message });
+    }
   }
 };
